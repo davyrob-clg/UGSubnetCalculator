@@ -3,7 +3,7 @@
 
 Welcome to the official **Subnetting Calculator**, a specialized web application developed for students enrolled in the **CSS51504 Networks** module at the University of Gibraltar. This tool is designed to simplify complex IPv4 calculations and provide a visual breakdown of address space.
 
-**Deployment URL:** `https://vercel.app`
+**Deployment URL:** `https://ug-subnet-calculator.vercel.app/`
 
 ---
 

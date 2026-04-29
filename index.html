@@ -84,7 +84,7 @@
     <div class="card">
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h2 style="margin: 0; color: #333;">Subnet Calculator</h2>
+            <h2 style="margin: 0; color: #333;">IPV4 Subnet Calculator</h2>
             <img src="unigib-landscape-red-01-scaled.png" alt="UniGib Logo" style="height: 45px; width: auto;">
         </div>
 
@@ -275,6 +275,8 @@
             }
         }
 
+        // 2. Logic to generate the table rows      
+
         function generateTable() {
             const ipLong = ipToLong(document.getElementById('ipInput').value);
             const baseCidr = parseInt(document.getElementById('cidrInput').value);
@@ -335,50 +337,6 @@
         }
 
 
-        // 2. Logic to generate the table rows
-        function generateTable1() {
-            const ipLong = ipToLong(document.getElementById('ipInput').value);
-            const baseCidr = parseInt(document.getElementById('cidrInput').value);
-            const targetCidr = parseInt(subCidrInput.value);
-            const tbody = document.getElementById('tableBody');
-
-            tbody.innerHTML = '';
-            if (ipLong === null || targetCidr <= baseCidr) return;
-
-            const baseMask = (MASK32 << BigInt(32 - baseCidr)) & MASK32;
-            const networkBase = ipLong & baseMask;
-
-            const numSubnets = 1n << BigInt(targetCidr - baseCidr);
-            const subnetSize = 1n << BigInt(32 - targetCidr);
-
-            // Cap at 100 rows to prevent browser lag (matching original Perl script intent)
-            const displayLimit = numSubnets > 100n ? 100n : numSubnets;
-
-            for (let i = 0n; i < displayLimit; i++) {
-                const subNet = networkBase + (i * subnetSize);
-                const subBroad = subNet + subnetSize - 1n;
-
-                const row = `<tr>
-                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${i + 1n}</td>
-                
-                <td style="padding: 8px; border-bottom: 1px solid #ddd; font-family: monospace;">
-                    ${longToIp(subBroad)}
-                </td>
-<td style="padding: 8px; border-bottom: 1px solid #ddd; font-family: monospace;">
-                    ${longToIp(subNet)} - ${longToIp(subBroad)}
-                </td>
-
-            </tr>`;
-                tbody.innerHTML += row;
-            }
-
-            if (numSubnets > 100n) {
-                tbody.innerHTML += `<tr><td colspan="3" style="text-align:center; padding:10px; color:#666;">
-                ... showing first 100 of ${numSubnets.toLocaleString()} subnets ...
-            </td></tr>`;
-            }
-        }
-
         // Link everything to the main calculate function
         const originalCalculate = calculate;
         calculate = function () {
@@ -392,9 +350,7 @@
         subCidrInput.addEventListener('change', generateTable);
 
 
-
-
-
+        // Table showing bits of the IP address. 
         function renderBitGrid() {
             const ipLong = ipToLong(document.getElementById('ipInput').value) || 0n;
             const cidr = parseInt(document.getElementById('cidrInput').value);

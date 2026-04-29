@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subnet Calculator</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f4f7f6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .results {
+            background: #eef2f3;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #d1d8db;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #666;
+        }
+
+        .value {
+            font-family: monospace;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 style="margin: 0; color: #333;">Subnet Calculator</h2>
+            <img src="unigib-landscape-red-01-scaled.png" alt="UniGib Logo" style="height: 45px; width: auto;">
+        </div>
+
+
+
+        <div class="input-group">
+            <label>IP Address</label>
+            <input type="text" id="ipInput" value="192.168.1.1" placeholder="e.g. 10.0.0.1">
+        </div>
+
+        <div class="input-group">
+            <label>CIDR Notation</label>
+            <select id="cidrInput"></select>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button id="calcBtn"
+                style="flex: 2; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                CALCULATE
+            </button>
+            <button id="resetBtn"
+                style="flex: 1; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                RESET
+            </button>
+        </div>
+
+        <div class="results" id="results">
+            <div class="result-item"><span class="label">Netmask:</span> <span class="value" id="resMask">-</span></div>
+            <div class="result-item"><span class="label">Network:</span> <span class="value" id="resNet">-</span></div>
+            <div class="result-item"><span class="label">Broadcast:</span> <span class="value" id="resBroad">-</span>
+            </div>
+            <div class="result-item"><span class="label">Total Hosts:</span> <span class="value" id="resHosts">-</span>
+            </div>
+            <div class="result-item"><span class="label">Usable Hosts:</span> <span class="value"
+                    id="resUsable">-</span></div>
+
+            <!-- Add this below the .results div in your previous HTML -->
+            <div class="table-container" style="margin-top: 20px;">
+                <label>Breakdown to CIDR:</label>
+                <select id="subCidrInput" style="margin-bottom: 15px;"></select>
+
+                <table id="subnetTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+
+
+
+                    <thead>
+                        <tr style="background: #2c3e50; color: white; text-align: left;">
+                            <th style="padding: 8px;">#</th>
+                            <th style="padding: 8px;">Network ID</th>
+                            <th style="padding: 8px;">Broadcast</th>
+                            <th style="padding: 8px;">Usable Host Range</th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+
+        </div>
+
+        <!-- Place this inside the .card after the results div -->
+<div class="bit-container" style="margin-top: 20px;">
+    <label>32-Bit Grid (Network vs Host)</label>
+    <div id="bitGrid" style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-top: 10px;">
+        <!-- Generated by JS -->
+    </div>
+    <div style="display: flex; gap: 20px; margin-top: 10px; font-size: 0.8rem;">
+        <span><span style="display:inline-block; width:12px; height:12px; background:#3498db; margin-right:5px;"></span>Network Bits</span>
+        <span><span style="display:inline-block; width:12px; height:12px; background:#e74c3c; margin-right:5px;"></span>Host Bits</span>
+    </div>
+</div>
+
+    </div>
+
+
+
+    <script>
+        // Constants and Helper Functions (ipToLong, longToIp, etc. remain the same)
+        const ipInput = document.getElementById('ipInput');
+        const cidrInput = document.getElementById('cidrInput');
+        const calcBtn = document.getElementById('calcBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        /**
+         * This is the main "Trigger" function
+         * It runs all the logic we converted from the Perl script
+         */
+        function runAllCalculations() {
+            const ipVal = ipInput.value;
+            const cidrVal = parseInt(cidrInput.value);
+
+            if (!ipToLong(ipVal)) {
+                alert("Please enter a valid IPv4 address (e.g., 192.168.1.1)");
+                return;
+            }
+
+            // 1. Run the base calculation (Broadcast, Host count)
+            calculate();
+
+            // 2. Update the subnet dropdown options
+            updateSubCidrOptions(cidrVal);
+
+            // 3. Generate the table (Perl subnets() logic)
+            generateTable();
+
+            // 4. Update the visual bit grid
+            renderBitGrid();
+        }
+
+        // Event Listener for the Calculate Button
+        calcBtn.addEventListener('click', runAllCalculations);
+
+        // Event Listener for the Reset Button
+        resetBtn.addEventListener('click', () => {
+            ipInput.value = '192.168.1.1';
+            cidrInput.value = '24';
+            //document.getElementById('results').innerHTML = 'Results cleared. Press Calculate.';
+            //document.getElementById('tableBody').innerHTML = '';
+            //document.getElementById('bitGrid').innerHTML = '';
+        });
+
+        // Optional: Allow pressing "Enter" in the text box to trigger calculation
+        ipInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') runAllCalculations();
+        });
+
+
+        const MASK32 = 0xFFFFFFFFn;
+
+        // Populate CIDR dropdown
+        for (let i = 32; i >= 0; i--) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `/${i}`;
+            if (i === 24) opt.selected = true;
+            cidrInput.appendChild(opt);
+        }
+
+        function ipToLong(ip) {
+            const parts = ip.split('.');
+            if (parts.length !== 4) return null;
+            return parts.reduce((acc, octet) => (acc << 8n) + BigInt(octet), 0n);
+        }
+
+        function longToIp(long) {
+            return [24, 16, 8, 0].map(bit => Number((long >> BigInt(bit)) & 255n)).join('.');
+        }
+
+        function calculate() {
+            const ipLong = ipToLong(ipInput.value);
+            const cidr = parseInt(cidrInput.value);
+
+            if (ipLong === null) return;
+
+            const mask = (MASK32 << BigInt(32 - cidr)) & MASK32;
+            const network = ipLong & mask;
+            const wildcard = ~mask & MASK32;
+            const broadcast = network | wildcard;
+
+            const totalHosts = 2n ** BigInt(32 - cidr);
+            const usableHosts = totalHosts > 2n ? totalHosts - 2n : (totalHosts === 1n ? 1n : 0n);
+
+            document.getElementById('resMask').textContent = longToIp(mask);
+            document.getElementById('resNet').textContent = longToIp(network);
+            document.getElementById('resBroad').textContent = longToIp(broadcast);
+            document.getElementById('resHosts').textContent = totalHosts.toLocaleString();
+            document.getElementById('resUsable').textContent = usableHosts.toLocaleString();
+        }
+
+        [ipInput, cidrInput].forEach(el => el.addEventListener('input', calculate));
+        calculate(); // Initial run
+
+
+
+
+        // 1. Populate the Subnet CIDR dropdown (starting from the current CIDR + 1)
+        const subCidrInput = document.getElementById('subCidrInput');
+        function updateSubCidrOptions(currentCidr) {
+            subCidrInput.innerHTML = '';
+            for (let i = currentCidr + 1; i <= 32; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `/${i}`;
+                if (i === 30) opt.selected = true; // Default to /30 as requested
+                subCidrInput.appendChild(opt);
+            }
+        }
+
+        function generateTable() {
+            const ipLong = ipToLong(document.getElementById('ipInput').value);
+            const baseCidr = parseInt(document.getElementById('cidrInput').value);
+            const targetCidr = parseInt(subCidrInput.value);
+            const tbody = document.getElementById('tableBody');
+
+            tbody.innerHTML = '';
+            if (ipLong === null || targetCidr <= baseCidr) return;
+
+            const baseMask = (MASK32 << BigInt(32 - baseCidr)) & MASK32;
+            const networkBase = ipLong & baseMask;
+
+            const numSubnets = 1n << BigInt(targetCidr - baseCidr);
+            const subnetSize = 1n << BigInt(32 - targetCidr);
+
+            // Safety limit to 100 rows
+            const displayLimit = numSubnets > 100n ? 100n : numSubnets;
+
+            for (let i = 0n; i < displayLimit; i++) {
+                const subNet = networkBase + (i * subnetSize);
+                const subBroad = subNet + subnetSize - 1n;
+
+                // Calculate Usable Range
+                let hostRange = "N/A";
+                if (targetCidr < 31) {
+                    const firstHost = subNet + 1n;
+                    const lastHost = subBroad - 1n;
+                    hostRange = `${longToIp(firstHost)} - ${longToIp(lastHost)}`;
+                } else if (targetCidr === 31) {
+                    hostRange = "Point-to-Point";
+                } else {
+                    hostRange = "None (Host)";
+                }
+
+                const row = `<tr>
+            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${i + 1n}</td>
+            
+            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-family: monospace; font-weight: bold;">
+                ${longToIp(subNet)}
+            </td>
+            
+            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-family: monospace; color: #e74c3c;">
+                ${longToIp(subBroad)}
+            </td>
+
+            <td style="padding: 8px; border-bottom: 1px solid #ddd; font-family: monospace; color: #27ae60;">
+                ${hostRange}
+            </td>
+        </tr>`;
+                tbody.innerHTML += row;
+            }
+
+            if (numSubnets > 100n) {
+                tbody.innerHTML += `<tr><td colspan="4" style="text-align:center; padding:10px; color:#666;">
+            ... showing first 100 of ${numSubnets.toLocaleString()} subnets ...
+        </td></tr>`;
+            }
+        }
+
+
+        // 2. Logic to generate the table rows
+        function generateTable1() {
+            const ipLong = ipToLong(document.getElementById('ipInput').value);
+            const baseCidr = parseInt(document.getElementById('cidrInput').value);
+            const targetCidr = parseInt(subCidrInput.value);
+            const tbody = document.getElementById('tableBody');
+
+            tbody.innerHTML = '';
+            if (ipLong === null || targetCidr <= baseCidr) return;
+
+            const baseMask = (MASK32 << BigInt(32 - baseCidr)) & MASK32;
+            const networkBase = ipLong & baseMask;
+
+            const numSubnets = 1n << BigInt(targetCidr - baseCidr);
+            const subnetSize = 1n << BigInt(32 - targetCidr);
+
+            // Cap at 100 rows to prevent browser lag (matching original Perl script intent)
+            const displayLimit = numSubnets > 100n ? 100n : numSubnets;
+
+            for (let i = 0n; i < displayLimit; i++) {
+                const subNet = networkBase + (i * subnetSize);
+                const subBroad = subNet + subnetSize - 1n;
+
+                const row = `<tr>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${i + 1n}</td>
+                
+                <td style="padding: 8px; border-bottom: 1px solid #ddd; font-family: monospace;">
+                    ${longToIp(subBroad)}
+                </td>
+<td style="padding: 8px; border-bottom: 1px solid #ddd; font-family: monospace;">
+                    ${longToIp(subNet)} - ${longToIp(subBroad)}
+                </td>
+
+            </tr>`;
+                tbody.innerHTML += row;
+            }
+
+            if (numSubnets > 100n) {
+                tbody.innerHTML += `<tr><td colspan="3" style="text-align:center; padding:10px; color:#666;">
+                ... showing first 100 of ${numSubnets.toLocaleString()} subnets ...
+            </td></tr>`;
+            }
+        }
+
+        // Link everything to the main calculate function
+        const originalCalculate = calculate;
+        calculate = function () {
+            console.log("Hello")
+            originalCalculate();
+            const cidr = parseInt(document.getElementById('cidrInput').value);
+            updateSubCidrOptions(cidr);
+            generateTable();
+        };
+
+        subCidrInput.addEventListener('change', generateTable);
+
+
+
+
+
+        function renderBitGrid() {
+            const ipLong = ipToLong(document.getElementById('ipInput').value) || 0n;
+            const cidr = parseInt(document.getElementById('cidrInput').value);
+            const grid = document.getElementById('bitGrid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < 32; i++) {
+                const bitValue = (ipLong >> BigInt(31 - i)) & 1n;
+                const isNetwork = i < cidr;
+
+                const bitBox = document.createElement('div');
+                bitBox.style.padding = '5px';
+                bitBox.style.textAlign = 'center';
+                bitBox.style.color = 'white';
+                bitBox.style.fontSize = '0.7rem';
+                bitBox.style.fontFamily = 'monospace';
+                bitBox.style.borderRadius = '2px';
+                bitBox.style.background = isNetwork ? '#3498db' : '#e74c3c';
+                bitBox.textContent = bitValue.toString();
+
+                // Add spacing every 8 bits (octets)
+                if (i > 0 && i % 8 === 0) {
+                    const spacer = document.createElement('div');
+                    spacer.style.gridColumn = 'span 8';
+                    spacer.style.height = '2px';
+                    grid.appendChild(spacer);
+                }
+
+                grid.appendChild(bitBox);
+            }
+        }
+
+        // Update the main calculate wrapper
+        const finalCalculate = calculate;
+        calculate = function () {
+            finalCalculate();
+            renderBitGrid();
+        };
+        renderBitGrid(); // Initial load
+
+
+
+
+    </script>
+
+
+</body>
+
+</html>

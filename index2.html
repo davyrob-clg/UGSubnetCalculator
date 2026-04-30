@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UniGib Subnet Pro - Ultimate Edition</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f0f2f5; color: #333; line-height: 1.5; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        label { font-weight: 600; font-size: 0.85rem; color: #555; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+        
+        button.main-btn { width: 100%; padding: 14px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 20px;}
+        button.main-btn:hover { background: #0062cc; }
+
+        /* Binary View */
+        .binary-section { background: #2d3436; color: #00ff00; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9rem; margin-bottom: 25px; display: none; }
+        .bin-row { display: grid; grid-template-columns: 100px 1fr; margin-bottom: 5px; }
+        .bin-label { color: #aaa; }
+
+        /* Tables & UI */
+        .info-card { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 25px; display: none; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: #f1f1f1; text-align: left; padding: 10px; border-bottom: 2px solid #ddd; position: sticky; top: 0; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .mono { font-family: monospace; font-weight: bold; color: #0056b3; }
+        
+        .section-header { display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #007bff; padding-left: 10px; margin: 30px 0 15px 0; }
+        .search-box { width: 250px; padding: 8px; font-size: 0.85rem; }
+        .cheat-sheet-container { height: 350px; overflow-y: auto; border: 1px solid #ddd; border-radius: 6px; }
+        .sub-note { font-size: 0.7rem; color: #888; display: block; font-weight: normal; }
+        #toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 24px; border-radius: 8px; display: none; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 style="margin: 0; color: #333;">UniGib IPV4 Subnet Calculator</h2>
+            <img src="unigib-landscape-red-01-scaled.png" alt="UniGib Logo" style="height: 45px; width: auto;">
+        </div>
+
+    
+    
+    <div class="grid">
+        <div>
+            <label>IP Address</label>
+            <input type="text" id="ip" value="192.168.1.1">
+        </div>
+        <div>
+            <label>Parent CIDR</label>
+            <select id="parentCidr" onchange="updateSplitOptions()"></select>
+        </div>
+        <div>
+            <label>Split CIDR</label>
+            <select id="splitCidr"></select>
+        </div>
+    </div>
+    
+    <button class="main-btn" onclick="calculate()">Calculate & Visualize</button>
+
+    <div id="binaryView" class="binary-section">
+        <div class="bin-row"><span class="bin-label">Address:</span> <span id="binIp"></span></div>
+        <div class="bin-row"><span class="bin-label">Mask:</span> <span id="binMask" style="color: #fab1a0;"></span></div>
+    </div>
+
+    <div id="infoCard" class="info-card">
+        <div class="info-item"><span class="info-label">Class: </span><span id="resClass" style="font-weight:bold;">-</span></div>
+        <div class="info-item"><span class="info-label">Mask: </span><span id="resMask" style="font-weight:bold;">-</span></div>
+        <div class="info-item"><span class="info-label">Internet: </span><span id="resVis" style="font-weight:bold;">-</span></div>
+        <div class="info-item"><span class="info-label">Total Hosts: </span><span id="resHosts" style="font-weight:bold;">-</span></div>
+    </div>
+
+    <div class="section-header"><h3>Subnet Breakdown</h3></div>
+    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Network ID</th>
+                    <th>Usable Range</th>
+                    <th>Broadcast</th>
+                    <th style="width:60px;">Copy</th>
+                </tr>
+            </thead>
+            <tbody id="subnetBody"></tbody>
+        </table>
+    </div>
+
+    <div class="section-header">
+        <h3>CIDR Cheat Sheet</h3>
+        <input type="text" id="cheatSearch" class="search-box" placeholder="Filter CIDR, Mask, or Hosts..." onkeyup="filterCheatSheet()">
+    </div>
+    <div class="cheat-sheet-container">
+        <table id="cheatTable">
+            <thead>
+                <tr>
+                    <th>CIDR</th>
+                    <th>Mask</th>
+                    <th>Subnets <span class="sub-note">(Rel. to Class)</span></th>
+                    <th>Total IPs</th>
+                    <th>Usable Hosts</th>
+                </tr>
+            </thead>
+            <tbody id="cheatSheetBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="toast">Copied to clipboard!</div>
+
+<script>
+// --- Initialization & Setup ---
+const parentSelect = document.getElementById('parentCidr');
+for (let i = 0; i <= 32; i++) {
+    let opt = document.createElement('option');
+    opt.value = i; opt.text = `/${i}`;
+    if (i === 24) opt.selected = true;
+    parentSelect.add(opt);
+}
+
+const cheatSheetBody = document.getElementById('cheatSheetBody');
+for (let i = 0; i <= 32; i++) {
+    const totalIps = Math.pow(2, 32 - i);
+    const mask = (i === 0) ? "0.0.0.0" : intToIp((~0 << (32 - i)) >>> 0);
+    
+    let subnets = "1";
+    if (i > 8 && i <= 16) subnets = Math.pow(2, i - 8).toLocaleString() + " (of /8)";
+    else if (i > 16 && i <= 24) subnets = Math.pow(2, i - 16).toLocaleString() + " (of /16)";
+    else if (i > 24) subnets = Math.pow(2, i - 24).toLocaleString() + " (of /24)";
+
+    cheatSheetBody.innerHTML += `
+        <tr>
+            <td class="mono">/${i}</td>
+            <td class="mono">${mask}</td>
+            <td>${subnets}</td>
+            <td>${totalIps.toLocaleString()}</td>
+            <td>${(i <= 30) ? (totalIps - 2).toLocaleString() : (i === 31 ? 2 : 1)}</td>
+        </tr>`;
+}
+
+function updateSplitOptions() {
+    const parent = parseInt(document.getElementById('parentCidr').value);
+    const splitSelect = document.getElementById('splitCidr');
+    splitSelect.innerHTML = '';
+    for (let i = parent; i <= 32; i++) {
+        let opt = document.createElement('option');
+        opt.value = i; opt.text = `/${i} (${Math.pow(2, 32 - i).toLocaleString()} IPs)`;
+        splitSelect.add(opt);
+    }
+}
+
+// --- Logic Functions ---
+function ipToInt(ip) { return ip.split('.').reduce((res, octet) => (res << 8) + parseInt(octet, 10), 0) >>> 0; }
+function intToIp(int) { return [(int >>> 24) & 0xFF, (int >>> 16) & 0xFF, (int >>> 8) & 0xFF, int & 0xFF].join('.'); }
+function intToBin(int) { return (int >>> 0).toString(2).padStart(32, '0').match(/.{8}/g).join('.'); }
+
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 2000);
+    });
+}
+
+function filterCheatSheet() {
+    const input = document.getElementById('cheatSearch').value.toLowerCase();
+    const rows = document.getElementById('cheatTable').getElementsByTagName('tr');
+    for (let i = 1; i < rows.length; i++) {
+        const text = rows[i].textContent.toLowerCase();
+        rows[i].style.display = text.includes(input) ? "" : "none";
+    }
+}
+
+function calculate() {
+
+  
+    const ipStr = document.getElementById('ip').value;
+    const pCidr = parseInt(document.getElementById('parentCidr').value);
+    const sCidr = parseInt(document.getElementById('splitCidr').value);
+    const ipInt = ipToInt(ipStr);
+    const mask = (pCidr === 32) ? 0xFFFFFFFF : (pCidr === 0 ? 0 : (~0 << (32 - pCidr)) >>> 0);
+
+    var netclass =   getNetworkDetails(ipStr);
+
+    console.log(netclass);
+
+    
+    document.getElementById('binIp').innerText = intToBin(ipInt);
+    document.getElementById('binMask').innerText = intToBin(mask);
+    document.getElementById('binaryView').style.display = 'block';
+
+    const first = parseInt(ipStr.split('.'));
+    document.getElementById('resClass').innerText = (first < 128) ? "Class A" : (first < 192) ? "Class B" : (first < 224) ? "Class C" : "D/E";
+    document.getElementById('resMask').innerText = intToIp(mask);
+    document.getElementById('resVis').innerText = netclass.type;
+    document.getElementById('resHosts').innerText = Math.pow(2, 32 - pCidr).toLocaleString();
+    document.getElementById('infoCard').style.display = 'grid';
+
+    const tableBody = document.getElementById('subnetBody');
+    tableBody.innerHTML = '';
+    const baseNet = (ipInt & mask) >>> 0;
+    const step = Math.pow(2, 32 - sCidr);
+    const count = Math.min(Math.pow(2, sCidr - pCidr), 512);
+
+    for (let i = 0; i < count; i++) {
+        const nInt = (baseNet + (i * step)) >>> 0;
+        const bInt = (nInt + step - 1) >>> 0;
+        const netId = intToIp(nInt);
+        tableBody.innerHTML += `<tr>
+            <td class="mono">${netId}/${sCidr}</td>
+            <td>${sCidr <= 30 ? intToIp(nInt+1)+' - '+intToIp(bInt-1) : 'N/A'}</td>
+            <td class="mono">${intToIp(bInt)}</td>
+            <td><button onclick="copyText('${netId}/${sCidr}')">📋</button></td>
+        </tr>`;
+    }
+
+        // Get the details 
+        function getNetworkDetails(ipStr) {
+            const firstOctet = parseInt(ipStr.split('.')[0]);
+            let netClass = "Unknown";
+            let type = "Public";
+
+            // Determine Class
+            if (firstOctet >= 1 && firstOctet <= 126) netClass = "Class A";
+            else if (firstOctet === 127) netClass = "Loopback";
+            else if (firstOctet >= 128 && firstOctet <= 191) netClass = "Class B";
+            else if (firstOctet >= 192 && firstOctet <= 223) netClass = "Class C";
+            else if (firstOctet >= 224 && firstOctet <= 239) netClass = "Class D (Multicast)";
+            else if (firstOctet >= 240) netClass = "Class E (Experimental)";
+
+            // Determine Private vs Public (RFC 1918)
+            const ipInt = ipToInt(ipStr);
+            const pA = [ipToInt("10.0.0.0"), ipToInt("10.255.255.255")];
+            const pB = [ipToInt("172.16.0.0"), ipToInt("172.31.255.255")];
+            const pC = [ipToInt("192.168.0.0"), ipToInt("192.168.255.255")];
+
+            if ((ipInt >= pA[0] && ipInt <= pA[1]) ||
+                (ipInt >= pB[0] && ipInt <= pB[1]) ||
+                (ipInt >= pC[0] && ipInt <= pC[1])) {
+                type = "Private";
+            } else {
+                type = "Public"
+            }
+
+            return { netClass, type };
+        }
+}
+
+updateSplitOptions();
+</script>
+</body>
+</html>

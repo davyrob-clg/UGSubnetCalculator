@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Networking Course | University of Gibraltar</title>
+    <style>
+        :root {
+            --unigib-crimson: #D5192D;
+            --unigib-dark-gray: #333333;
+            --unigib-light-gray: #f4f4f4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--unigib-light-gray);
+            color: var(--unigib-dark-gray);
+        }
+
+        header {
+            background-color: #fff;
+            border-bottom: 4px solid var(--unigib-crimson);
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--unigib-crimson);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .course-hero {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://unigib.edu.gi');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 60px 5%;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            color: var(--unigib-crimson);
+            border-left: 5px solid var(--unigib-crimson);
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--unigib-dark-gray);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--unigib-crimson);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .motto {
+            font-style: italic;
+            text-align: center;
+            margin: 40px 0;
+            color: #666;
+        }
+
+        footer {
+            background-color: var(--unigib-dark-gray);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">University of Gibraltar</div>
+    <nav>Student Portal | VLE Access</nav>
+</header>
+
+<section class="course-hero">
+    <h1>BSc Computing: Advanced Networking</h1>
+    <p>Mastering the protocols and infrastructures that power the modern world.</p>
+</section>
+
+<div class="container">
+    <p class="motto">"Scientia est Clavis ad Successum" — Knowledge is the Key to Success</p>
+
+    <h2>Course Student Tools</h2>
+    <p>Access the proprietary technical utilities developed by the UniGib ICT department for your networking labs.</p>
+
+    <div class="tool-grid">
+        <!-- IP Calculator Tool -->
+        <div class="card">
+            <h3>IPv4/IPv6 Subnet Calculator</h3>
+            <p>Calculate VLSM masks, usable host ranges, and broadcast addresses for your network design assignments.</p>
+            <a href="#" class="btn">Launch Tool</a>
+        </div>
+
+        <!-- Packet Header Analyzer -->
+        <div class="card">
+            <h3>Protocol Header Visualizer</h3>
+            <p>A UniGib-developed tool to deconstruct TCP/IP and OSI layer headers for troubleshooting labs.</p>
+            <a href="#" class="btn">Launch Tool</a>
+        </div>
+
+        <!-- Network Topology Planner -->
+        <div class="card">
+            <h3>Gibraltar Campus Sim</h3>
+            <p>Simulate network traffic across the Europa Point Campus infrastructure.</p>
+            <a href="#" class="btn">Launch Tool</a>
+        </div>
+    </div>
+
+    <h2 style="margin-top: 50px;">Course Resources</h2>
+    <ul>
+        <li><strong>VLE Canvas:</strong> Access course announcements and submit assignments.</li>
+        <li><strong>Eduroam Support:</strong> Technical guides for campus wireless connectivity.</li>
+        <li><strong>CCNA Prep:</strong> Materials for Implementing and Administering Cisco Solutions.</li>
+    </ul>
+</div>
+
+<footer>
+    <p>&copy; 2026 University of Gibraltar. All Global Accreditations (QAA) Recognized.</p>
+</footer>
+
+</body>
+</html>
